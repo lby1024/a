@@ -1,39 +1,132 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <!-- 引入样式 -->
-  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		canvas{
+			display: block;
+		}
+		img{
+			display: none;
+		}
+		html{
+			height: 100%;
+		}
+		body{
+			height: 100%;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+	</style>
 </head>
-<style>
- 
-</style>
 <body>
- <div id="app">
-   <el-dropdown>
-     <span class="el-dropdown-link">
-       下拉菜单<i class="el-icon-arrow-down el-icon--right"></i>
-     </span>
-     <el-dropdown-menu slot="dropdown">
-       <el-dropdown-item>黄金糕</el-dropdown-item>
-       <el-dropdown-item>狮子头</el-dropdown-item>
-       <el-dropdown-item>螺蛳粉</el-dropdown-item>
-       <el-dropdown-item disabled>双皮奶</el-dropdown-item>
-       <el-dropdown-item divided>蚵仔煎</el-dropdown-item>
-     </el-dropdown-menu>
-   </el-dropdown>
- </div>
- 
+	<img src="300.png" alt="" id="pic">
+	<canvas width="600" height="600"></canvas>
+
+	<script type="text/javascript">
+		// 选中画布
+		var canvas = document.querySelector("canvas");
+		// 创建画笔
+		var ctx = canvas.getContext("2d");
+
+		var pic = document.getElementById('pic')
+		
+		// 每生成一个小球的实例便将一个小球的数据放入这个数组
+		var ballarr = [];
+
+		function Ball(targetX , targetY){
+			// 起始位置
+			// 0到800之间取一个随机数
+			this.x = Math.random() * 800;
+			this.y = Math.random() * 500;
+			// 设置小球半径
+			this.r = Math.random() * 20;
+
+			// 终点
+			this.targetX = targetX;
+			this.targetY = targetY;
+
+			// 距离
+			this.distanceX = this.targetX - this.x;
+			this.distanceY = this.targetY - this.y;
+
+			// 定时器每次执行的位移
+			this.dx = this.distanceX / 100;
+			this.dy = this.distanceY / 100;
+
+			ballarr.push(this);
+		}
+		Ball.prototype.render = function(){
+
+			if(Math.abs(this.targetX-this.x)>Math.abs(this.dx)){
+				this.x += this.dx;
+				this.r -= 0.7
+			}
+			if(Math.abs(this.targetY-this.y)>Math.abs(this.dy)){
+				this.y += this.dy;
+			}
+			if(this.r<0.1){
+				this.r = 0.5
+			}
+
+			ctx.beginPath();
+			ctx.arc(this.x , this.y , this.r , 0 , 7 , false);
+			ctx.fill();
+		}
+
+
+		pic.onload = function(){
+			ballarr = [];
+			ctx.drawImage(pic, 0,0);  
+			//得到所有点的坐标
+
+			var imagedata = ctx.getImageData(0, 0, 600, 600);	
+			// imagedata.data是一个长度为400*400*4的list组成
+			// 400*400表示宽400个像素点,高400个像素点,
+			// 一个像素点由4个数字组成,分别表示rgb和透明度
+			// 例如 : 
+			// 		画布宽2像素,高2像素
+			// 		imagedata.data = [0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,]
+			// 					      ↓ ↓ ↓ ↓  ↓ ↓ ↓ ↓  ↓ ↓ ↓ ↓  ↓ ↓ ↓ ↓ 
+			//					      r,g,b,o, r,g,b,o, r,g,b,o, r,g,b,o,
+			// 						  (1,1)点  (1,2)点  (2,1)点  (2,2)点   
+			
+			var arr = [];	//这个数组存放所有黑色的点的坐标
+			// 遍历所有的透明度
+			for(var i = 3 ; i < imagedata.data.length ; i+=4){
+				// 如果透明度不为0就提取出来
+				if(imagedata.data[i] != 0){
+					// 获取透明度不为0的点的x坐标 : (i-3)/4%400
+					// 获取点的y坐标 : Math.ceil(i/(400*4))
+					arr.push({"x" : (i - 3) / 4 % 600 , "y" : Math.ceil(i / (600 * 4))});
+				}
+			}
+
+
+			// arr.forEach(function(item){
+			// 	ctx.beginPath();
+			// 	ctx.arc(item.x , item.y , 0.3 , 0 , 7 , false);
+			// 	ctx.fill();
+			// });
+
+			arr.forEach(function(item){
+				// item.x*4 : 比例放大4倍
+				// +后面的是位移
+				new Ball(item.x*2 , item.y*2);
+			});
+
+		}
+			
+		setInterval(function(){
+			//清屏
+			ctx.clearRect(0, 0, 600, 600);
+			ballarr.forEach(function(item){
+				item.render();
+			});
+		},100);
+
+	</script>
 </body>
-  <!-- 先引入 Vue -->
-  <script src="https://unpkg.com/vue/dist/vue.js"></script>
-  <!-- 引入组件库 -->
-  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
-  <script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
-  <link href="https://cdn.bootcss.com/jqueryui/1.12.1/jquery-ui.min.css" rel="stylesheet">
-  <script>
-    var app = new Vue({
-      el : '#app'
-    })
-  </script>
 </html>
